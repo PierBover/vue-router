@@ -1,65 +1,25 @@
-# vue-router [![Build Status](https://img.shields.io/circleci/project/vuejs/vue-router/dev.svg)](https://circleci.com/gh/vuejs/vue-router)
+# Vue Router fork for Chrome OS
 
-> This is vue-router 2.0 which works only with Vue 2.0. For the 1.x router see the [1.0 branch](https://github.com/vuejs/vue-router/tree/1.0).
+This is a fork from Vue Router `3.0.1` to overcome some Chrome OS limitations for Chrome apps.
 
-### Introduction
+Chrome OS apps crash when accessing the `window.history` object. The problem is that even when using Vue Router in hash mode it still accesses `window.history`. This fork fixes that.
 
-`vue-router` is the official router for [Vue.js](http://vuejs.org). It deeply integrates with Vue.js core to make building Single Page Applications with Vue.js a breeze. Features include:
+This fork is really a **quick hack** only intended to be used in hash mode, but I personally use it in a Chrome OS app and it works fine for that purpose.
 
-- Nested route/view mapping
-- Modular, component-based router configuration
-- Route params, query, wildcards
-- View transition effects powered by Vue.js' transition system
-- Fine-grained navigation control
-- Links with automatic active CSS classes
-- HTML5 history mode or hash mode, with auto-fallback in IE9
-- Customizable Scroll Behavior
+To use this repo in your project simply:
+```
+npm install pierbover/vue-router#chrome-os
+```
+And then:
+```
+import Vue from 'vue';
+import Router from 'vue-router-chrome-os';
 
-Get started with the [documentation](http://vuejs.github.io/vue-router), or play with the [examples](https://github.com/vuejs/vue-router/tree/dev/examples) (see how to run them below).
+Vue.use(Router);
 
-### Development Setup
-
-``` bash
-# install deps
-npm install
-
-# build dist files
-npm run build
-
-# serve examples at localhost:8080
-npm run dev
-
-# lint & run all tests
-npm test
-
-# serve docs at localhost:4000 (requires global gitbook-cli)
-npm run docs
+const router = new Router(...);
 ```
 
-## Questions
+For the moment it's not possible to use `router.go(n) `, but otherwise it behaves like Vue Router in hash mode.
 
-For questions and support please use the [Discord chat server](https://chat.vuejs.org) or [the official forum](http://forum.vuejs.org). The issue list of this repo is **exclusively** for bug reports and feature requests.
-
-## Issues
-
-Please make sure to read the [Issue Reporting Checklist](https://github.com/vuejs/vue/blob/dev/.github/CONTRIBUTING.md#issue-reporting-guidelines) before opening an issue. Issues not conforming to the guidelines may be closed immediately.
-
-## Contribution
-
-Please make sure to read the [Contributing Guide](https://github.com/vuejs/vue/blob/dev/.github/CONTRIBUTING.md) before making a pull request.
-
-## Changelog
-
-Details changes for each release are documented in the [release notes](https://github.com/vuejs/vue-router/releases).
-
-## Stay In Touch
-
-- For latest releases and announcements, follow on Twitter: [@vuejs](https://twitter.com/vuejs)
-
-## License
-
-[MIT](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2013-2017 Evan You
-
-
+I have created a [feature request](https://github.com/vuejs/vue-router/issues/2304) to solve this but I doubt there will be interest by the Vue team since Chrome OS is still pretty exotic thing.

@@ -1,6 +1,6 @@
 /**
   * vue-router v3.0.1
-  * (c) 2017 Evan You
+  * (c) 2018 Evan You
   * @license MIT
   */
 'use strict';
@@ -1526,190 +1526,6 @@ function resolveRecordPath (path, record) {
 
 /*  */
 
-
-var positionStore = Object.create(null);
-
-function setupScroll () {
-  // Fix for #1585 for Firefox
-  window.history.replaceState({ key: getStateKey() }, '');
-  window.addEventListener('popstate', function (e) {
-    saveScrollPosition();
-    if (e.state && e.state.key) {
-      setStateKey(e.state.key);
-    }
-  });
-}
-
-function handleScroll (
-  router,
-  to,
-  from,
-  isPop
-) {
-  if (!router.app) {
-    return
-  }
-
-  var behavior = router.options.scrollBehavior;
-  if (!behavior) {
-    return
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    assert(typeof behavior === 'function', "scrollBehavior must be a function");
-  }
-
-  // wait until re-render finishes before scrolling
-  router.app.$nextTick(function () {
-    var position = getScrollPosition();
-    var shouldScroll = behavior(to, from, isPop ? position : null);
-
-    if (!shouldScroll) {
-      return
-    }
-
-    if (typeof shouldScroll.then === 'function') {
-      shouldScroll.then(function (shouldScroll) {
-        scrollToPosition((shouldScroll), position);
-      }).catch(function (err) {
-        if (process.env.NODE_ENV !== 'production') {
-          assert(false, err.toString());
-        }
-      });
-    } else {
-      scrollToPosition(shouldScroll, position);
-    }
-  });
-}
-
-function saveScrollPosition () {
-  var key = getStateKey();
-  if (key) {
-    positionStore[key] = {
-      x: window.pageXOffset,
-      y: window.pageYOffset
-    };
-  }
-}
-
-function getScrollPosition () {
-  var key = getStateKey();
-  if (key) {
-    return positionStore[key]
-  }
-}
-
-function getElementPosition (el, offset) {
-  var docEl = document.documentElement;
-  var docRect = docEl.getBoundingClientRect();
-  var elRect = el.getBoundingClientRect();
-  return {
-    x: elRect.left - docRect.left - offset.x,
-    y: elRect.top - docRect.top - offset.y
-  }
-}
-
-function isValidPosition (obj) {
-  return isNumber(obj.x) || isNumber(obj.y)
-}
-
-function normalizePosition (obj) {
-  return {
-    x: isNumber(obj.x) ? obj.x : window.pageXOffset,
-    y: isNumber(obj.y) ? obj.y : window.pageYOffset
-  }
-}
-
-function normalizeOffset (obj) {
-  return {
-    x: isNumber(obj.x) ? obj.x : 0,
-    y: isNumber(obj.y) ? obj.y : 0
-  }
-}
-
-function isNumber (v) {
-  return typeof v === 'number'
-}
-
-function scrollToPosition (shouldScroll, position) {
-  var isObject = typeof shouldScroll === 'object';
-  if (isObject && typeof shouldScroll.selector === 'string') {
-    var el = document.querySelector(shouldScroll.selector);
-    if (el) {
-      var offset = shouldScroll.offset && typeof shouldScroll.offset === 'object' ? shouldScroll.offset : {};
-      offset = normalizeOffset(offset);
-      position = getElementPosition(el, offset);
-    } else if (isValidPosition(shouldScroll)) {
-      position = normalizePosition(shouldScroll);
-    }
-  } else if (isObject && isValidPosition(shouldScroll)) {
-    position = normalizePosition(shouldScroll);
-  }
-
-  if (position) {
-    window.scrollTo(position.x, position.y);
-  }
-}
-
-/*  */
-
-var supportsPushState = inBrowser && (function () {
-  var ua = window.navigator.userAgent;
-
-  if (
-    (ua.indexOf('Android 2.') !== -1 || ua.indexOf('Android 4.0') !== -1) &&
-    ua.indexOf('Mobile Safari') !== -1 &&
-    ua.indexOf('Chrome') === -1 &&
-    ua.indexOf('Windows Phone') === -1
-  ) {
-    return false
-  }
-
-  return window.history && 'pushState' in window.history
-})();
-
-// use User Timing api (if present) for more accurate key precision
-var Time = inBrowser && window.performance && window.performance.now
-  ? window.performance
-  : Date;
-
-var _key = genKey();
-
-function genKey () {
-  return Time.now().toFixed(3)
-}
-
-function getStateKey () {
-  return _key
-}
-
-function setStateKey (key) {
-  _key = key;
-}
-
-function pushState (url, replace) {
-  saveScrollPosition();
-  // try...catch the pushState call to get around Safari
-  // DOM Exception 18 where it limits to 100 pushState calls
-  var history = window.history;
-  try {
-    if (replace) {
-      history.replaceState({ key: _key }, '', url);
-    } else {
-      _key = genKey();
-      history.pushState({ key: _key }, '', url);
-    }
-  } catch (e) {
-    window.location[replace ? 'replace' : 'assign'](url);
-  }
-}
-
-function replaceState (url) {
-  pushState(url, true);
-}
-
-/*  */
-
 function runQueue (queue, fn, cb) {
   var step = function (index) {
     if (index >= queue.length) {
@@ -2135,90 +1951,164 @@ function poll (
 
 /*  */
 
+var supportsPushState = inBrowser && (function () {
+	return false
+})();
 
-var HTML5History = (function (History$$1) {
-  function HTML5History (router, base) {
-    var this$1 = this;
+// use User Timing api (if present) for more accurate key precision
+var Time = inBrowser && window.performance && window.performance.now
+  ? window.performance
+  : Date;
 
-    History$$1.call(this, router, base);
+var _key = genKey();
 
-    var expectScroll = router.options.scrollBehavior;
+function genKey () {
+  return Time.now().toFixed(3)
+}
 
-    if (expectScroll) {
-      setupScroll();
+function getStateKey () {
+  return _key
+}
+
+function setStateKey (key) {
+  _key = key;
+}
+
+function pushState (url, replace) {
+  saveScrollPosition();
+  // try...catch the pushState call to get around Safari
+  // DOM Exception 18 where it limits to 100 pushState calls
+  window.location[replace ? 'replace' : 'assign'](url);
+}
+
+function replaceState (url) {
+  pushState(url, true);
+}
+
+/*  */
+
+
+var positionStore = Object.create(null);
+
+function setupScroll () {
+  // Fix for #1585 for Firefox
+  window.addEventListener('popstate', function (e) {
+    saveScrollPosition();
+    if (e.state && e.state.key) {
+      setStateKey(e.state.key);
+    }
+  });
+}
+
+function handleScroll (
+  router,
+  to,
+  from,
+  isPop
+) {
+  if (!router.app) {
+    return
+  }
+
+  var behavior = router.options.scrollBehavior;
+  if (!behavior) {
+    return
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    assert(typeof behavior === 'function', "scrollBehavior must be a function");
+  }
+
+  // wait until re-render finishes before scrolling
+  router.app.$nextTick(function () {
+    var position = getScrollPosition();
+    var shouldScroll = behavior(to, from, isPop ? position : null);
+
+    if (!shouldScroll) {
+      return
     }
 
-    var initLocation = getLocation(this.base);
-    window.addEventListener('popstate', function (e) {
-      var current = this$1.current;
-
-      // Avoiding first `popstate` event dispatched in some browsers but first
-      // history route not updated since async guard at the same time.
-      var location = getLocation(this$1.base);
-      if (this$1.current === START && location === initLocation) {
-        return
-      }
-
-      this$1.transitionTo(location, function (route) {
-        if (expectScroll) {
-          handleScroll(router, route, current, true);
+    if (typeof shouldScroll.then === 'function') {
+      shouldScroll.then(function (shouldScroll) {
+        scrollToPosition((shouldScroll), position);
+      }).catch(function (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          assert(false, err.toString());
         }
       });
-    });
-  }
-
-  if ( History$$1 ) HTML5History.__proto__ = History$$1;
-  HTML5History.prototype = Object.create( History$$1 && History$$1.prototype );
-  HTML5History.prototype.constructor = HTML5History;
-
-  HTML5History.prototype.go = function go (n) {
-    window.history.go(n);
-  };
-
-  HTML5History.prototype.push = function push (location, onComplete, onAbort) {
-    var this$1 = this;
-
-    var ref = this;
-    var fromRoute = ref.current;
-    this.transitionTo(location, function (route) {
-      pushState(cleanPath(this$1.base + route.fullPath));
-      handleScroll(this$1.router, route, fromRoute, false);
-      onComplete && onComplete(route);
-    }, onAbort);
-  };
-
-  HTML5History.prototype.replace = function replace (location, onComplete, onAbort) {
-    var this$1 = this;
-
-    var ref = this;
-    var fromRoute = ref.current;
-    this.transitionTo(location, function (route) {
-      replaceState(cleanPath(this$1.base + route.fullPath));
-      handleScroll(this$1.router, route, fromRoute, false);
-      onComplete && onComplete(route);
-    }, onAbort);
-  };
-
-  HTML5History.prototype.ensureURL = function ensureURL (push) {
-    if (getLocation(this.base) !== this.current.fullPath) {
-      var current = cleanPath(this.base + this.current.fullPath);
-      push ? pushState(current) : replaceState(current);
+    } else {
+      scrollToPosition(shouldScroll, position);
     }
-  };
+  });
+}
 
-  HTML5History.prototype.getCurrentLocation = function getCurrentLocation () {
-    return getLocation(this.base)
-  };
-
-  return HTML5History;
-}(History));
-
-function getLocation (base) {
-  var path = window.location.pathname;
-  if (base && path.indexOf(base) === 0) {
-    path = path.slice(base.length);
+function saveScrollPosition () {
+  var key = getStateKey();
+  if (key) {
+    positionStore[key] = {
+      x: window.pageXOffset,
+      y: window.pageYOffset
+    };
   }
-  return (path || '/') + window.location.search + window.location.hash
+}
+
+function getScrollPosition () {
+  var key = getStateKey();
+  if (key) {
+    return positionStore[key]
+  }
+}
+
+function getElementPosition (el, offset) {
+  var docEl = document.documentElement;
+  var docRect = docEl.getBoundingClientRect();
+  var elRect = el.getBoundingClientRect();
+  return {
+    x: elRect.left - docRect.left - offset.x,
+    y: elRect.top - docRect.top - offset.y
+  }
+}
+
+function isValidPosition (obj) {
+  return isNumber(obj.x) || isNumber(obj.y)
+}
+
+function normalizePosition (obj) {
+  return {
+    x: isNumber(obj.x) ? obj.x : window.pageXOffset,
+    y: isNumber(obj.y) ? obj.y : window.pageYOffset
+  }
+}
+
+function normalizeOffset (obj) {
+  return {
+    x: isNumber(obj.x) ? obj.x : 0,
+    y: isNumber(obj.y) ? obj.y : 0
+  }
+}
+
+function isNumber (v) {
+  return typeof v === 'number'
+}
+
+function scrollToPosition (shouldScroll, position) {
+  var isObject = typeof shouldScroll === 'object';
+  if (isObject && typeof shouldScroll.selector === 'string') {
+    var el = document.querySelector(shouldScroll.selector);
+    if (el) {
+      var offset = shouldScroll.offset && typeof shouldScroll.offset === 'object' ? shouldScroll.offset : {};
+      offset = normalizeOffset(offset);
+      position = getElementPosition(el, offset);
+    } else if (isValidPosition(shouldScroll)) {
+      position = normalizePosition(shouldScroll);
+    }
+  } else if (isObject && isValidPosition(shouldScroll)) {
+    position = normalizePosition(shouldScroll);
+  }
+
+  if (position) {
+    window.scrollTo(position.x, position.y);
+  }
 }
 
 /*  */
@@ -2292,7 +2182,7 @@ var HashHistory = (function (History$$1) {
   };
 
   HashHistory.prototype.go = function go (n) {
-    window.history.go(n);
+  	throw 'Since window.history is not available you cannot go back or forward!'
   };
 
   HashHistory.prototype.ensureURL = function ensureURL (push) {
@@ -2359,64 +2249,13 @@ function replaceHash (path) {
   }
 }
 
-/*  */
-
-
-var AbstractHistory = (function (History$$1) {
-  function AbstractHistory (router, base) {
-    History$$1.call(this, router, base);
-    this.stack = [];
-    this.index = -1;
+function getLocation (base) {
+  var path = window.location.pathname;
+  if (base && path.indexOf(base) === 0) {
+    path = path.slice(base.length);
   }
-
-  if ( History$$1 ) AbstractHistory.__proto__ = History$$1;
-  AbstractHistory.prototype = Object.create( History$$1 && History$$1.prototype );
-  AbstractHistory.prototype.constructor = AbstractHistory;
-
-  AbstractHistory.prototype.push = function push (location, onComplete, onAbort) {
-    var this$1 = this;
-
-    this.transitionTo(location, function (route) {
-      this$1.stack = this$1.stack.slice(0, this$1.index + 1).concat(route);
-      this$1.index++;
-      onComplete && onComplete(route);
-    }, onAbort);
-  };
-
-  AbstractHistory.prototype.replace = function replace (location, onComplete, onAbort) {
-    var this$1 = this;
-
-    this.transitionTo(location, function (route) {
-      this$1.stack = this$1.stack.slice(0, this$1.index).concat(route);
-      onComplete && onComplete(route);
-    }, onAbort);
-  };
-
-  AbstractHistory.prototype.go = function go (n) {
-    var this$1 = this;
-
-    var targetIndex = this.index + n;
-    if (targetIndex < 0 || targetIndex >= this.stack.length) {
-      return
-    }
-    var route = this.stack[targetIndex];
-    this.confirmTransition(route, function () {
-      this$1.index = targetIndex;
-      this$1.updateRoute(route);
-    });
-  };
-
-  AbstractHistory.prototype.getCurrentLocation = function getCurrentLocation () {
-    var current = this.stack[this.stack.length - 1];
-    return current ? current.fullPath : '/'
-  };
-
-  AbstractHistory.prototype.ensureURL = function ensureURL () {
-    // noop
-  };
-
-  return AbstractHistory;
-}(History));
+  return (path || '/') + window.location.search + window.location.hash
+}
 
 /*  */
 
@@ -2431,31 +2270,8 @@ var VueRouter = function VueRouter (options) {
   this.afterHooks = [];
   this.matcher = createMatcher(options.routes || [], this);
 
-  var mode = options.mode || 'hash';
-  this.fallback = mode === 'history' && !supportsPushState && options.fallback !== false;
-  if (this.fallback) {
-    mode = 'hash';
-  }
-  if (!inBrowser) {
-    mode = 'abstract';
-  }
-  this.mode = mode;
-
-  switch (mode) {
-    case 'history':
-      this.history = new HTML5History(this, options.base);
-      break
-    case 'hash':
-      this.history = new HashHistory(this, options.base, this.fallback);
-      break
-    case 'abstract':
-      this.history = new AbstractHistory(this, options.base);
-      break
-    default:
-      if (process.env.NODE_ENV !== 'production') {
-        assert(false, ("invalid mode: " + mode));
-      }
-  }
+  this.mode = 'hash';
+  this.history = new HashHistory(this, options.base, false);
 };
 
 var prototypeAccessors = { currentRoute: { configurable: true } };
@@ -2492,18 +2308,14 @@ VueRouter.prototype.init = function init (app /* Vue component instance */) {
 
   var history = this.history;
 
-  if (history instanceof HTML5History) {
-    history.transitionTo(history.getCurrentLocation());
-  } else if (history instanceof HashHistory) {
-    var setupHashListener = function () {
-      history.setupListeners();
-    };
-    history.transitionTo(
-      history.getCurrentLocation(),
-      setupHashListener,
-      setupHashListener
-    );
-  }
+  var setupHashListener = function () {
+    history.setupListeners();
+  };
+  history.transitionTo(
+    history.getCurrentLocation(),
+    setupHashListener,
+    setupHashListener
+  );
 
   history.listen(function (route) {
     this$1.apps.forEach(function (app) {

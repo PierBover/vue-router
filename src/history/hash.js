@@ -3,7 +3,6 @@
 import type Router from '../index'
 import { History } from './base'
 import { cleanPath } from '../util/path'
-import { getLocation } from './html5'
 import { setupScroll, handleScroll } from '../util/scroll'
 import { pushState, replaceState, supportsPushState } from '../util/push-state'
 
@@ -63,7 +62,7 @@ export class HashHistory extends History {
   }
 
   go (n: number) {
-    window.history.go(n)
+  	throw 'Since window.history is not available you cannot go back or forward!'
   }
 
   ensureURL (push?: boolean) {
@@ -126,4 +125,12 @@ function replaceHash (path) {
   } else {
     window.location.replace(getUrl(path))
   }
+}
+
+function getLocation (base: string): string {
+  let path = window.location.pathname
+  if (base && path.indexOf(base) === 0) {
+    path = path.slice(base.length)
+  }
+  return (path || '/') + window.location.search + window.location.hash
 }
