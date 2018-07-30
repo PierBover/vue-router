@@ -22,4 +22,4 @@ const router = new Router(...);
 
 For the moment it's not possible to use `router.go(n) `, but otherwise it behaves like Vue Router in hash mode.
 
-I have created a [feature request](https://github.com/vuejs/vue-router/issues/2304) to solve this but I doubt there will be interest by the Vue team since Chrome OS is still pretty exotic thing.
+I have created a [feature request](https://github.com/vuejs/vue-router/issues/2304) to solve this but I doubt there will be interest by the Vue team since Chrome OS is still a pretty exotic thing.
